@@ -1,8 +1,8 @@
 /* Liquid-glass look: translucent panels with blur, rim highlights and soft depth over a colored backdrop. */
 :root {
-  --ink: #17202a; --muted: #5b6672; --line: rgba(255,255,255,.55);
+  --ink: #17202a; --muted: #5b6672; --line: rgba(255,255,255,.62);
   --accent: #2f6fed; --accent-2: #4f8bff; --accent-ink: #ffffff; --good: #178f4e; --bad: #d23f3f; --warn: #a86a12;
-  --glass: rgba(255,255,255,.52); --glass-strong: rgba(255,255,255,.70); --glass-soft: rgba(255,255,255,.34);
+  --glass: rgba(255,255,255,.34); --glass-strong: rgba(255,255,255,.48); --glass-soft: rgba(255,255,255,.22);
   --chip: rgba(255,255,255,.55);
   --r-xl: 26px; --r-lg: 20px; --r-md: 14px; --r-sm: 11px;
   --shadow: 0 10px 30px rgba(31,45,80,.10), 0 1px 2px rgba(31,45,80,.06);
@@ -33,8 +33,8 @@ code { background: var(--chip); padding: 1px 6px; border-radius: 6px; font-size:
 /* --- glass primitives --- */
 .glass, .panel, .card, .top, .banner, .tablewrap, .totals, dialog, .filters input, .filters select, .field select, .field input, .addrow input, .cred input, #aiCard input {
   background: var(--glass);
-  -webkit-backdrop-filter: blur(22px) saturate(1.7);
-  backdrop-filter: blur(22px) saturate(1.7);
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  backdrop-filter: blur(18px) saturate(1.8);
   border: 1px solid var(--line);
   box-shadow: var(--shadow), var(--rim);
 }
@@ -52,7 +52,7 @@ code { background: var(--chip); padding: 1px 6px; border-radius: 6px; font-size:
 .tabs a { padding: 7px 15px; border-radius: 999px; color: var(--muted); font-weight: 550; transition: background .18s, color .18s, transform .12s; }
 .tabs a:hover { color: var(--ink); }
 .tabs a:active { transform: scale(.96); }
-.tabs a.active { background: rgba(255,255,255,.92); color: var(--ink); box-shadow: 0 2px 8px rgba(31,45,80,.12), inset 0 1px 0 #fff; }
+.tabs a.active { background: rgba(255,255,255,.78); color: var(--ink); box-shadow: 0 2px 8px rgba(31,45,80,.12), inset 0 1px 0 #fff; }
 .syncbox { margin-inline-start: auto; display: flex; align-items: center; gap: 12px; }
 
 /* --- buttons --- */
@@ -82,7 +82,7 @@ main { padding: 18px 18px 48px; max-width: 1260px; margin: 0 auto; }
 .card .value { font-size: 21px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .card .sub { color: var(--muted); font-size: 12px; margin-top: 3px; }
 .card.accent { color: #fff; border-color: rgba(255,255,255,.45);
-  background: linear-gradient(140deg, rgba(79,139,255,.95), rgba(47,111,237,.95)); box-shadow: 0 14px 34px rgba(47,111,237,.38), inset 0 1px 0 rgba(255,255,255,.6); }
+  background: linear-gradient(140deg, rgba(79,139,255,.82), rgba(47,111,237,.82)); box-shadow: 0 14px 34px rgba(47,111,237,.38), inset 0 1px 0 rgba(255,255,255,.6); }
 .card.accent .label, .card.accent .sub { color: rgba(255,255,255,.88); }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
@@ -121,7 +121,7 @@ main { padding: 18px 18px 48px; max-width: 1260px; margin: 0 auto; }
 .tablewrap { border-radius: var(--r-xl); overflow: auto; margin-top: 8px; }
 .tablewrap.flat { border: none; box-shadow: none; background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; border-radius: 0; margin-top: 0; }
 table.tx { width: 100%; border-collapse: collapse; }
-table.tx th { text-align: right; font-weight: 600; font-size: 13px; color: var(--muted); padding: 12px 16px; border-bottom: 1px solid rgba(31,45,80,.08); position: sticky; top: 0; background: rgba(255,255,255,.6); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+table.tx th { text-align: right; font-weight: 600; font-size: 13px; color: var(--muted); padding: 12px 16px; border-bottom: 1px solid rgba(31,45,80,.08); position: sticky; top: 0; background: rgba(255,255,255,.45); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 table.tx td { padding: 10px 16px; border-bottom: 1px solid rgba(31,45,80,.06); vertical-align: top; }
 table.tx tr:hover td { background: rgba(255,255,255,.45); }
 table.tx .desc { font-weight: 550; }
@@ -163,7 +163,7 @@ table.rec td { vertical-align: middle; }
 table.rec tr.click:hover td { background: rgba(255,255,255,.5); }
 
 /* --- dialog --- */
-dialog { border-radius: var(--r-xl); padding: 0; max-width: 560px; width: calc(100% - 40px); background: var(--glass-strong); color: var(--ink); }
+dialog { border-radius: var(--r-xl); padding: 0; max-width: 560px; width: calc(100% - 40px); background: rgba(255,255,255,.62); color: var(--ink); }
 dialog::backdrop { background: rgba(20,26,40,.28); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .dlg { padding: 22px 24px; direction: rtl; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
