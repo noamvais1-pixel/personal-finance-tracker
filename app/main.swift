@@ -63,7 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate, WKNaviga
         }
     }
 
-    func load() { web.load(URLRequest(url: dashboardURL)) }
+    func load() { web.load(URLRequest(url: dashboardURL, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 30)) }
 
     func showStatus(_ text: String) {
         let html = """

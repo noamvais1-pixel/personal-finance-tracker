@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'node:path';
+import fs from 'node:fs';
 import { db, now, getSetting, setSetting } from './db.js';
 import { COMPANIES, PORT, ROOT, log } from './config.js';
 import { CATEGORY_NAMES, CATEGORY_ICONS, isExcludedCategory, RULES_VERSION, recategorizeAll } from './categories.js';
@@ -10,7 +11,8 @@ import { detectRecurring, setRecurringOverride } from './recurring.js';
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
-app.use(express.static(path.join(ROOT, 'public'), { etag: false, maxAge: 0, setHeaders: res => res.setHeader('Cache-Control', 'no-store') }));
+app.use((req, res, next) => { res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate'); res.setHeader('Pragma', 'no-cache'); res.setHeader('Expires', '0'); next(); });
+app.use(express.static(path.join(ROOT, 'public'), { etag: false, maxAge: 0, lastModified: false }));
 
 const thisMonth = () => new Date().toLocaleDateString('en-CA').slice(0, 7);
 const monthOk = m => /^\d{4}-\d{2}$/.test(m || '');
@@ -23,6 +25,10 @@ function allCategories() {
   ];
 }
 
+// A fingerprint of the dashboard files; the page reloads itself when it changes.
+function assetVersion() {
+  try { return ['index.html', 'app.js', 'style.css'].map(f => Math.floor(fs.statSync(path.join(ROOT, 'public', f)).mtimeMs)).join('-'); } catch { return '0'; }
+}
 app.get('/api/state', (_req, res) => {
   const accounts = db.prepare('SELECT * FROM accounts ORDER BY kind, account_number').all();
   const futureDebits = db.prepare('SELECT * FROM future_debits ORDER BY charge_date').all();
@@ -44,6 +50,7 @@ app.get('/api/state', (_req, res) => {
     settings: { syncHour: getSetting('syncHour', 7), monthsBack: getSetting('monthsBack', 12) },
     categories: allCategories(),
     month: thisMonth(),
+    assetVersion: assetVersion(),
   });
 });
 

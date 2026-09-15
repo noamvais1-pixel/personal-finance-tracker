@@ -44,6 +44,9 @@ window.addEventListener('hashchange', () => showTab(location.hash.slice(1) || 'o
 /* ---------- state ---------- */
 async function loadState() {
   state.data = await api('/api/state');
+  // the program's files changed (new design or code): reload so the window is never stale
+  if (state.assetVersion && state.data.assetVersion && state.assetVersion !== state.data.assetVersion) { location.reload(); return; }
+  state.assetVersion = state.data.assetVersion;
   if (!state.month) state.month = state.data.month;
   renderSyncStatus();
   renderBanner();
@@ -403,5 +406,5 @@ $('#nextMonth').onclick = () => { const [y, m] = state.month.split('-').map(Numb
   showTab(location.hash.slice(1) || 'overview');
   await loadOverview();
   if (state.data.sync.running || state.data.approval?.running) pollSync();
-  setInterval(async () => { const was = state.data.sync.running; await loadState(); if (was && !state.data.sync.running) refreshCurrent(); }, 30000);
+  setInterval(async () => { const was = state.data.sync.running; await loadState(); if (was && !state.data.sync.running) refreshCurrent(); }, 15000);
 })();
