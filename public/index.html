@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>מעקב כספים</title>
+<link rel="stylesheet" href="style.css?v=7">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">₪</span><h1>מעקב כספים</h1></div>
+  <nav class="tabs">
+    <a href="#overview" data-tab="overview" class="active">סקירה</a>
+    <a href="#transactions" data-tab="transactions">תנועות</a>
+    <a href="#recurring" data-tab="recurring">קבועים</a>
+    <a href="#categories" data-tab="categories">קטגוריות</a>
+    <a href="#settings" data-tab="settings">הגדרות</a>
+  </nav>
+  <div class="syncbox">
+    <span id="syncStatus" class="muted"></span>
+    <button id="syncBtn" class="btn primary">סנכרן עכשיו</button>
+  </div>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+
+<main>
+  <!-- ===== Overview ===== -->
+  <section id="tab-overview" class="tab">
+    <div class="monthbar">
+      <button class="btn ghost" id="prevMonth">‹ חודש קודם</button>
+      <h2 id="monthTitle"></h2>
+      <button class="btn ghost" id="nextMonth">חודש הבא ›</button>
+    </div>
+
+    <div class="cards" id="kpis"></div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><h3>הוצאות לפי קטגוריה</h3><span class="muted" id="catTotal"></span></div>
+        <div id="catBars" class="catbars"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h3>6 חודשים אחרונים</h3><span class="muted">הכנסות מול הוצאות</span></div>
+        <div id="trend" class="trend"></div>
+        <div class="panel-h" style="margin-top:18px"><h3>הוצאות לפי יום</h3></div>
+        <div id="daily" class="daily"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><h3>איפה הלך הכי הרבה כסף</h3><span class="muted">בתי עסק מובילים החודש</span></div>
+        <ol id="topMerchants" class="toplist"></ol>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h3>ההוצאות הגדולות של החודש</h3></div>
+        <ul id="largest" class="toplist plain"></ul>
+        <div class="panel-h" style="margin-top:18px"><h3>הכנסות</h3></div>
+        <ul id="incomeList" class="toplist plain"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Transactions ===== -->
+  <section id="tab-transactions" class="tab" hidden>
+    <div class="monthbar" style="justify-content:flex-start;gap:10px;margin-bottom:10px">
+      <button class="btn ghost" id="txPrev">‹ חודש קודם</button>
+      <h2 id="txMonthTitle" style="font-size:19px;min-width:150px;text-align:center"></h2>
+      <button class="btn ghost" id="txNext">חודש הבא ›</button>
+      <button class="btn ghost small" id="txAll">כל התקופה</button>
+      <button class="btn ghost small" id="txToday">החודש</button>
+      <input type="hidden" id="fMonth">
+    </div>
+    <div class="filters">
+      <div class="searchbox">
+        <input type="search" id="fSearch" placeholder="חיפוש בתיאור…">
+        <button class="btn primary" id="fSearchBtn">חפש</button>
+      </div>
+      <select id="fCompany"><option value="">כל המקורות</option></select>
+      <select id="fCategory"><option value="">כל הקטגוריות</option></select>
+      <select id="fKind"><option value="">הכל</option><option value="expense">רק הוצאות</option><option value="income">רק הכנסות</option><option value="pending">ממתינות לחיוב</option></select>
+      <button class="btn ghost" id="fClear">נקה סינון</button>
+      <a class="btn ghost" id="exportBtn" href="/api/export.csv">ייצוא לאקסל</a>
+    </div>
+    <div class="muted" id="txSummary"></div>
+    <div class="tablewrap">
+      <table class="tx">
+        <thead><tr><th>תאריך</th><th>תיאור</th><th>מקור</th><th>קטגוריה</th><th class="num">סכום</th></tr></thead>
+        <tbody id="txBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== Recurring ===== -->
+  <section id="tab-recurring" class="tab" hidden>
+    <div class="cards" id="recKpis"></div>
+    <div class="panel">
+      <div class="panel-h"><h3>הוצאות קבועות</h3><span class="muted">חיובים שחוזרים באופן סדיר · לחיצה על שורה מציגה את התנועות</span></div>
+      <div class="tablewrap flat">
+        <table class="tx rec">
+          <thead><tr><th>בית עסק</th><th>קטגוריה</th><th>תדירות</th><th class="num">סכום טיפוסי</th><th>חיוב אחרון</th><th>הבא צפוי</th><th></th></tr></thead>
+          <tbody id="recExpenses"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><h3>תשלומים (עסקאות בתשלומים)</h3><span class="muted">מה עוד נשאר לשלם</span></div>
+        <ul id="recInstallments" class="toplist plain"></ul>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h3>הכנסות קבועות</h3></div>
+        <ul id="recIncome" class="toplist plain"></ul>
+      </div>
+    </div>
+    <p class="muted small">לא רואה כאן משהו שחוזר כל חודש? פותחים את התנועה בלשונית "תנועות", לוחצים על הקטגוריה שלה ומסמנים "זו הוצאה קבועה". כדי להוריד שורה מהרשימה לוחצים על ✕.</p>
+  </section>
+
+  <!-- ===== Categories ===== -->
+  <section id="tab-categories" class="tab" hidden>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><h3>הקטגוריות</h3><span class="muted">אפשר להוסיף משלך</span></div>
+        <div class="addrow">
+          <input id="newCatIcon" placeholder="🏷️" maxlength="2" style="width:56px;text-align:center">
+          <input id="newCatName" placeholder="שם קטגוריה חדשה">
+          <button class="btn primary" id="addCatBtn">הוסף</button>
+        </div>
+        <ul id="catList" class="catlist"></ul>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h3>הכללים שלך</h3><span class="muted">בתי עסק שסיווגת ידנית</span></div>
+        <p class="muted small">כשמשנים קטגוריה לתנועה ומסמנים "לכל התנועות מבית העסק הזה", נוצר כאן כלל שחל גם על תנועות עתידיות.</p>
+        <ul id="ruleList" class="catlist"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Settings ===== -->
+  <section id="tab-settings" class="tab" hidden>
+    <div class="grid2" id="credCards"></div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><h3>סנכרון אוטומטי</h3></div>
+        <label class="field">בכל יום, החל מהשעה
+          <select id="syncHour"></select>
+        </label>
+        <label class="field">בסנכרון הראשון, למשוך היסטוריה של
+          <select id="monthsBack">
+            <option value="3">3 חודשים</option><option value="6">6 חודשים</option><option value="12">12 חודשים</option>
+          </select>
+        </label>
+        <p class="muted small">הסנכרון רץ רק כשהמחשב ער והתוכנה פועלת. אם פספס יום, הוא ישלים בפעם הבאה שהתוכנה תיפתח.</p>
+        <button class="btn" id="saveSettings">שמור</button>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><h3>יומן סנכרונים</h3></div>
+        <ul id="syncLog" class="catlist small"></ul>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn danger" id="quitBtn">יציאה מהתוכנה</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" id="aiCard"></div>
+    <div class="panel">
+      <div class="panel-h"><h3>איך זה עובד ומה בטוח</h3></div>
+      <ul class="bullets">
+        <li>הסיסמאות נשמרות ב<strong>צרור המפתחות (Keychain)</strong> של ה-Mac, לא בקובץ. התוכנה לא שולחת שום דבר לאינטרנט חוץ מההתחברות לאתר הבנק ולאתר מקס עצמם.</li>
+        <li>כל התנועות נשמרות במחשב הזה בלבד, בתיקיית <code>data</code> שבתיקיית התוכנה.</li>
+        <li>אם הבנק או מקס משנים את האתר, הסנכרון עלול להיכשל עד שהספרייה שהתוכנה משתמשת בה תתעדכן. תופיע הודעה ברורה כאן למעלה.</li>
+        <li>אפשר להסיר את פרטי ההתחברות בכל רגע בכפתור "הסר" למעלה.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<!-- category picker dialog -->
+<dialog id="catDialog">
+  <form method="dialog" class="dlg">
+    <h3>שינוי קטגוריה</h3>
+    <p id="dlgDesc" class="muted"></p>
+    <div id="dlgCats" class="chips"></div>
+    <label class="check"><input type="checkbox" id="dlgApplyAll" checked> להחיל על כל התנועות מבית העסק הזה (גם בעתיד)</label>
+    <label class="check"><input type="checkbox" id="dlgExcluded"> לא לספור כהוצאה/הכנסה (למשל העברה בין החשבונות שלי)</label>
+    <label class="check"><input type="checkbox" id="dlgRecurring"> זו הוצאה/הכנסה קבועה (להציג בלשונית "קבועים")</label>
+    <div class="dlg-actions"><button value="cancel" class="btn ghost">ביטול</button></div>
+  </form>
+</dialog>
+
+<script src="app.js?v=8"></script>
+</body>
+</html>
