@@ -2,6 +2,7 @@
 // One request handles up to 40 merchants; results are cached per merchant so each name is asked once.
 import { GoogleGenAI } from '@google/genai';
 import fs from 'node:fs';
+import os from 'node:os';
 import { db, now, setSetting } from './db.js';
 import { log } from './config.js';
 import { getCredentials, setCredentials, hasCredentials } from './keychain.js';
@@ -24,7 +25,7 @@ export function geminiKey() {
   if (k) return k;
   // reuse the key the appointment tracker already has on this Mac, once
   try {
-    const env = fs.readFileSync('/Users/miriamweiss/Desktop/appointment tracker/.env', 'utf8');
+    const env = fs.readFileSync(os.homedir() + '/Desktop/appointment tracker/.env', 'utf8');
     const m = env.match(/^GEMINI_API_KEY=\s*(\S+)/m);
     if (m) { setCredentials('gemini', { apiKey: m[1] }); return m[1]; }
   } catch {}

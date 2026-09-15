@@ -5,7 +5,7 @@ import WebKit
 // then shows http://localhost:PORT in a WebKit view. Closing the window does NOT stop the
 // tracker - it keeps reading messages in the background.
 
-let projectDir = "/Users/miriamweiss/Desktop/תיקיה ללא שם 3"
+let projectDir = NSHomeDirectory() + "/Desktop/תיקיה ללא שם 3"
 let launchScript = projectDir + "/launch.sh"
 
 func readPort() -> String {
