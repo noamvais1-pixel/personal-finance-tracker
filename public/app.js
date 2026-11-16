@@ -7,6 +7,7 @@ const monthName = ym => { const [y, m] = ym.split('-').map(Number); return `${MO
 const shortMonth = ym => MONTHS[Number(ym.split('-')[1]) - 1].slice(0, 3);
 const fmtDate = d => { const [y, m, dd] = d.split('-'); return `${dd}.${m}.${y.slice(2)}`; };
 const relTime = iso => { if (!iso) return 'אף פעם'; const mins = Math.round((Date.now() - new Date(iso)) / 60000); if (mins < 2) return 'ממש עכשיו'; if (mins < 60) return `לפני ${mins} דק׳`; const h = Math.round(mins / 60); if (h < 24) return `לפני ${h} שע׳`; return `לפני ${Math.round(h / 24)} ימים`; };
+const SPIN = '<span class="spin" aria-hidden="true"></span>';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const COLORS = ['#2f6fed','#e8743b','#1f9d55','#8e44ad','#d64545','#17a2b8','#b7791f','#5c6bc0','#26a69a','#ef5350','#7e57c2','#9ccc65','#ff7043','#42a5f5'];
 const catColor = new Map();
@@ -33,7 +34,11 @@ const companyName = id => state.data?.companies.find(c => c.id === id)?.name || 
 function showTab(name) {
   state.tab = name;
   document.querySelectorAll('.tab').forEach(s => s.hidden = s.id !== 'tab-' + name);
-  document.querySelectorAll('.tabs a').forEach(a => a.classList.toggle('active', a.dataset.tab === name));
+  document.querySelectorAll('.tabs a').forEach(a => {
+    const on = a.dataset.tab === name;
+    a.classList.toggle('active', on);
+    if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  });
   if (name === 'transactions') loadTransactions();
   if (name === 'recurring') loadRecurring();
   if (name === 'categories') renderCategories();
@@ -57,13 +62,13 @@ function renderSyncStatus() {
   const d = state.data;
   const el = $('#syncStatus'); const btn = $('#syncBtn');
   if (d.approval?.running) {
-    el.innerHTML = `<span class="spin"></span>${esc(d.approval.companyName || '')}: אישור המחשב…`;
+    el.innerHTML = `${SPIN}${esc(d.approval.companyName || '')}: אישור המחשב…`;
     btn.disabled = true; btn.textContent = 'מסנכרן…';
   } else if (d.ai?.running) {
-    el.innerHTML = `<span class="spin"></span>Gemini: ${esc(d.ai.stage || 'מסווג…')}`;
+    el.innerHTML = `${SPIN}Gemini: ${esc(d.ai.stage || 'מסווג…')}`;
     btn.disabled = false; btn.textContent = 'סנכרן עכשיו';
   } else if (d.sync.running) {
-    el.innerHTML = `<span class="spin"></span>${esc(d.sync.companyName || '')}: ${esc(d.sync.stage || '')}`;
+    el.innerHTML = `${SPIN}${esc(d.sync.companyName || '')}: ${esc(d.sync.stage || '')}`;
     btn.disabled = true; btn.textContent = 'מסנכרן…';
   } else {
     const times = d.companies.filter(c => c.lastOk).map(c => new Date(c.lastOk.t));
@@ -82,7 +87,7 @@ function renderBanner() {
   }
   if (d.approval?.running) {
     b.className = 'banner info'; b.hidden = false;
-    b.innerHTML = `<span class="spin"></span><strong>${esc(d.approval.companyName)}:</strong> ${esc(d.approval.stage || '')}`;
+    b.innerHTML = `${SPIN}<strong>${esc(d.approval.companyName)}:</strong> ${esc(d.approval.stage || '')}`;
     return;
   }
   const failed = configured.filter(c => c.last && c.last.ok === 0 && !d.sync.running);
@@ -157,6 +162,7 @@ async function loadOverview() {
   $('#incomeList').innerHTML = s.incomeByCategory.length ? s.incomeByCategory.map(c => `<li class="click" data-cat="${esc(c.category)}"><div>${icon(c.category)} ${esc(c.category)} <span class="meta">· ${c.count}</span></div><div class="amt pos">${fmt(c.total)}</div></li>`).join('') : '<li class="empty">לא נמצאו הכנסות החודש</li>';
   document.querySelectorAll('#topMerchants [data-q], #largest [data-q]').forEach(li => li.onclick = () => goTx({ month: s.month, q: li.dataset.q }));
   document.querySelectorAll('#incomeList [data-cat]').forEach(li => li.onclick = () => goTx({ month: s.month, category: li.dataset.cat, kind: 'income' }));
+  activatable('#kpis .click, #catBars .row, #topMerchants .click, #largest .click, #incomeList .click');
 }
 
 // Open the transactions tab with the given filters (everything on the overview is clickable).
@@ -182,7 +188,7 @@ function renderTrend(trend) {
       <text x="${x + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="12" fill="#6b7079">${shortMonth(t.month)}</text>
       <text x="${x + bw / 2}" y="${Math.min(y(t.expenses), y(t.income)) - 4}" text-anchor="middle" font-size="10" fill="#6b7079">${t.expenses ? Math.round(t.expenses / 1000) + 'K' : ''}</text>`;
   }).join('');
-  $('#trend').innerHTML = `<svg viewBox="0 0 ${W} ${H}" direction="ltr"><line x1="0" y1="${H - padB}" x2="${W}" y2="${H - padB}" stroke="#e6e4dd"/>${bars}</svg>
+  $('#trend').innerHTML = `<svg viewBox="0 0 ${W} ${H}" direction="ltr" role="img" aria-label="הכנסות מול הוצאות ב-6 החודשים האחרונים"><line x1="0" y1="${H - padB}" x2="${W}" y2="${H - padB}" stroke="#e6e4dd"/>${bars}</svg>
     <div class="legend"><span><i style="background:#2f6fed"></i>הוצאות</span><span><i style="background:#1f9d55"></i>הכנסות</span></div>`;
 }
 
@@ -193,7 +199,7 @@ function renderDaily(byDay, month) {
   const vals = Array.from({ length: days }, (_, i) => byDay.find(d => Number(d.date.slice(8)) === i + 1)?.total || 0);
   const max = Math.max(1, ...vals);
   const bw = W / days;
-  $('#daily').innerHTML = `<svg viewBox="0 0 ${W} ${H}" direction="ltr">${vals.map((v, i) => `<rect x="${i * bw + 1}" y="${(H - padB) * (1 - v / max)}" width="${bw - 2}" height="${(H - padB) * v / max}" rx="2" fill="${v ? '#2f6fed' : '#eceae3'}" opacity="${v ? .8 : 1}"><title>${i + 1}.${m}: ${fmt(v)}</title></rect>${(i + 1) % 5 === 0 ? `<text x="${i * bw + bw / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="#6b7079">${i + 1}</text>` : ''}`).join('')}</svg>`;
+  $('#daily').innerHTML = `<svg viewBox="0 0 ${W} ${H}" direction="ltr" role="img" aria-label="הוצאות לפי יום ב${monthName(month)}">${vals.map((v, i) => `<rect x="${i * bw + 1}" y="${(H - padB) * (1 - v / max)}" width="${bw - 2}" height="${(H - padB) * v / max}" rx="2" fill="${v ? '#2f6fed' : '#eceae3'}" opacity="${v ? .8 : 1}"><title>${i + 1}.${m}: ${fmt(v)}</title></rect>${(i + 1) % 5 === 0 ? `<text x="${i * bw + bw / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="#6b7079">${i + 1}</text>` : ''}`).join('')}</svg>`;
 }
 
 /* ---------- transactions ---------- */
@@ -225,8 +231,8 @@ async function loadTransactions() {
 }
 ['fCompany', 'fCategory', 'fKind'].forEach(id => $('#' + id).onchange = loadTransactions);
 let searchT; $('#fSearch').oninput = () => { clearTimeout(searchT); searchT = setTimeout(loadTransactions, 300); };
-$('#fSearch').onkeydown = e => { if (e.key === 'Enter') { clearTimeout(searchT); loadTransactions(); } };
-$('#fSearchBtn').onclick = () => { clearTimeout(searchT); loadTransactions(); };
+// A real <form>: the browser's own Enter-to-submit already ignores the Enter that confirms an IME composition.
+$('#fSearchForm').onsubmit = e => { e.preventDefault(); clearTimeout(searchT); loadTransactions(); };
 $('#fClear').onclick = () => { ['fCompany', 'fCategory', 'fKind', 'fSearch'].forEach(id => $('#' + id).value = ''); setTxMonth(state.data.month); };
 
 // Month navigation on the transactions tab ('' = whole period)
@@ -281,7 +287,7 @@ async function loadRecurring() {
     <div class="card"><div class="label">לא הופיעו בזמן</div><div class="value" style="${overdueN ? 'color:var(--warn)' : ''}">${overdueN}</div><div class="sub">${overdueN ? 'חיובים שהיו אמורים לרדת כבר' : 'הכל ירד כרגיל'}</div></div>`;
   const removeBtn = x => `<button class="btn small ghost" title="להסיר מהרשימה" data-rm="${esc(x.merchant)}" data-dir="${x.direction}">✕</button>`;
   $('#recExpenses').innerHTML = r.expenses.length ? r.expenses.map(x => `<tr class="click" data-q="${esc(x.description)}">
-      <td><div class="desc">${esc(x.description)}${x.forced ? '<span class="badge">סומן ידנית</span>' : ''}</div><div class="src">${esc(x.companyName)} · ${x.count} פעמים מאז ${fmtDate(x.firstDate)}</div></td>
+      <td><div class="desc"><button type="button" class="linkbtn">${esc(x.description)}</button>${x.forced ? '<span class="badge">סומן ידנית</span>' : ''}</div><div class="src">${esc(x.companyName)} · ${x.count} פעמים מאז ${fmtDate(x.firstDate)}</div></td>
       <td>${icon(x.category)} ${esc(x.category)}</td>
       <td>${esc(x.cadence)}${x.cadenceKey !== 'monthly' && x.cadenceKey !== 'other' ? `<div class="src">≈ ${fmt(x.monthlyEquivalent)} לחודש</div>` : ''}</td>
       <td class="num" style="font-weight:600">${fmt(x.typicalAmount)}${Math.abs(x.lastAmount - x.typicalAmount) > Math.max(3, x.typicalAmount * 0.15) ? `<div class="src">אחרון: ${fmt(x.lastAmount)}</div>` : ''}</td>
@@ -290,8 +296,9 @@ async function loadRecurring() {
       <td>${removeBtn(x)}</td>
     </tr>`).join('') : '<tr><td colspan="7" class="empty">עדיין לא זוהו חיובים קבועים. צריך לפחות שני חודשים של נתונים.</td></tr>';
   $('#recInstallments').innerHTML = r.installments.length ? r.installments.map(p => `<li class="click" data-q="${esc(p.description)}"><div><div>${esc(p.description)}</div><div class="meta">${icon(p.category)} ${esc(p.category)} · שולמו ${p.lastNumber} מתוך ${p.total} · מסתיים ${fmtDate(p.endDate)}</div></div><div style="text-align:left"><div class="amt">${fmt(p.amount)} לחודש</div><div class="meta">נשאר ${fmt(p.remainingAmount)}</div></div></li>`).join('') : '<li class="empty">אין עסקאות בתשלומים פתוחות</li>';
-  $('#recIncome').innerHTML = r.income.length ? r.income.map(x => `<li class="click" data-q="${esc(x.description)}"><div><div>${esc(x.description)} ${removeBtn(x)}</div><div class="meta">${esc(x.cadence)} · אחרון ${fmtDate(x.lastDate)}${x.nextDate ? ' · הבא ' + fmtDate(x.nextDate) : ''}</div></div><div class="amt pos">${fmt(x.typicalAmount)}</div></li>`).join('') : '<li class="empty">לא זוהו הכנסות קבועות</li>';
+  $('#recIncome').innerHTML = r.income.length ? r.income.map(x => `<li class="click" data-q="${esc(x.description)}"><div><div><button type="button" class="linkbtn">${esc(x.description)}</button> ${removeBtn(x)}</div><div class="meta">${esc(x.cadence)} · אחרון ${fmtDate(x.lastDate)}${x.nextDate ? ' · הבא ' + fmtDate(x.nextDate) : ''}</div></div><div class="amt pos">${fmt(x.typicalAmount)}</div></li>`).join('') : '<li class="empty">לא זוהו הכנסות קבועות</li>';
   document.querySelectorAll('#tab-recurring [data-q]').forEach(el => el.onclick = e => { if (e.target.closest('[data-rm]')) return; goTx({ q: el.dataset.q }); });
+  activatable('#recInstallments .click');
   document.querySelectorAll('#tab-recurring [data-rm]').forEach(b => b.onclick = async e => { e.stopPropagation(); if (!confirm('להסיר מרשימת הקבועים? אפשר להחזיר דרך שינוי הקטגוריה של התנועה.')) return; await api('/api/recurring/override', { method: 'POST', body: JSON.stringify({ merchant: b.dataset.rm, direction: b.dataset.dir, state: 'no' }) }); loadRecurring(); });
 }
 
@@ -316,7 +323,7 @@ async function renderSettings() {
   $('#credCards').innerHTML = d.companies.map(c => `<div class="panel cred" data-company="${c.id}">
     <div class="panel-h"><h3>${esc(c.name)}</h3><span class="status"><span class="dot ${c.configured ? (c.last && c.last.ok === 0 ? 'bad' : 'ok') : ''}"></span>${c.configured ? (c.lastOk ? 'מחובר · עודכן ' + relTime(c.lastOk.t) : 'הפרטים נשמרו, עדיין לא סונכרן') : 'לא הוגדר'}</span></div>
     ${c.configured ? `<p class="muted small">הפרטים שמורים בצרור המפתחות. כדי להחליף, פשוט להזין מחדש ולשמור.</p>` : `<p class="muted small">אותם פרטים שאיתם נכנסים לאתר ${esc(c.name)} בדפדפן.</p>`}
-    ${c.fields.map(f => `<input name="${f.key}" type="${f.type}" placeholder="${esc(f.label)}" autocomplete="off">`).join('')}
+    ${c.fields.map(f => `<input name="${f.key}" type="${f.type}" placeholder="${esc(f.label)}" aria-label="${esc(c.name)}: ${esc(f.label)}" autocomplete="off">`).join('')}
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-save>${c.configured ? 'עדכן פרטים' : 'שמור והתחבר'}</button>${c.configured ? `<button class="btn" data-approve>אישור המחשב הזה (קוד SMS)</button><button class="btn" data-test>בדוק חיבור</button><button class="btn danger" data-remove>הסר</button>` : ''}</div>
     ${c.configured ? `<p class="muted small">בפעם הראשונה האתר מבקש קוד אימות ב-SMS. "אישור המחשב הזה" פותח חלון של האתר, מתחברים שם פעם אחת עם הקוד, ומאז הסנכרון עובד לבד.</p>` : ''}
     ${c.last && c.last.ok === 0 ? `<div class="banner error" style="margin:0;padding:8px 10px;font-size:13px">${esc(c.last.message)}</div>` : ''}
@@ -342,11 +349,11 @@ async function renderSettings() {
     <p class="muted small">בתי עסק שהכללים לא מזהים נשארים ב"אחר". Gemini מקבל את שמות בתי העסק (רק את השמות, בלי סכומים או פרטי חשבון) ומציע קטגוריה. כל שם נשאל פעם אחת בלבד. בגרסה החינמית יש מכסה יומית, ולכן זה רץ בקבוצות אחרי כל סנכרון.</p>
     <p class="small">${ai.unknown ? `כרגע <strong>${ai.unknown}</strong> בתי עסק ב"אחר".` : 'כל בתי העסק מסווגים.'} ${ai.lastResult ? `בריצה האחרונה: נשאלו ${ai.lastResult.asked}, עודכנו ${ai.lastResult.applied} תנועות${ai.lastResult.error ? ' · ' + esc(ai.lastResult.error) : ''}` : ''}</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <input id="aiKey" type="password" placeholder="${ai.configured ? 'מפתח שמור · להזין רק כדי להחליף' : 'מפתח API של Gemini'}" autocomplete="off" style="flex:1;min-width:220px">
+      <input id="aiKey" type="password" aria-label="מפתח API של Gemini" placeholder="${ai.configured ? 'מפתח שמור · להזין רק כדי להחליף' : 'מפתח API של Gemini'}" autocomplete="off" style="flex:1;min-width:220px">
       <button class="btn" id="aiSaveKey">${ai.configured ? 'החלף מפתח' : 'שמור מפתח'}</button>
       ${ai.configured ? `<button class="btn primary" id="aiRun" ${ai.running ? 'disabled' : ''}>${ai.running ? 'מסווג…' : 'סווג עכשיו'}</button><button class="btn danger" id="aiRemove">הסר מפתח</button>` : ''}
     </div>
-    <p class="muted small" style="margin-bottom:0">מפתח חינמי מקבלים ב-<a href="https://aistudio.google.com/apikey" target="_blank"><u>Google AI Studio</u></a>. המפתח נשמר בצרור המפתחות.</p>`;
+    <p class="muted small" style="margin-bottom:0">מפתח חינמי מקבלים ב-<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener"><u>Google AI Studio</u></a>. המפתח נשמר בצרור המפתחות.</p>`;
   $('#aiSaveKey').onclick = async () => { const k = $('#aiKey').value.trim(); if (!k) return alert('יש להדביק מפתח'); try { await api('/api/ai/key', { method: 'POST', body: JSON.stringify({ apiKey: k }) }); toast('המפתח נשמר'); await loadState(); renderSettings(); } catch (e) { alert(e.message); } };
   $('#aiRun')?.addEventListener('click', async () => { const r = await api('/api/ai/run', { method: 'POST' }); if (r.started === false) return alert(r.reason === 'no-key' ? 'קודם לשמור מפתח.' : 'הסיווג כבר רץ.'); toast('Gemini מסווג ברקע…'); pollSync(); });
   $('#aiRemove')?.addEventListener('click', async () => { if (!confirm('להסיר את מפתח Gemini?')) return; await api('/api/ai/key', { method: 'DELETE' }); await loadState(); renderSettings(); });
@@ -387,8 +394,26 @@ async function pollSync() {
 }
 
 /* ---------- misc ---------- */
+// Clickable cards/rows that open the transactions tab are links in behaviour:
+// make them focusable and announce them as links, and let Enter activate them.
+function activatable(sel) {
+  document.querySelectorAll(sel).forEach(el => { el.tabIndex = 0; el.setAttribute('role', 'link'); });
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches('[role="link"]:not(a)')) { e.preventDefault(); e.target.click(); }
+});
+// Light dismiss for the category dialog where <dialog closedby="any"> is not supported yet (Safari).
+if (!('closedBy' in HTMLDialogElement.prototype)) {
+  const outside = (e, d) => { const r = d.getBoundingClientRect(); return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom; };
+  for (const d of document.querySelectorAll('dialog[closedby="any"]')) {
+    let pressedOutside = false;
+    d.addEventListener('pointerdown', e => { pressedOutside = outside(e, d); });
+    d.addEventListener('pointerup', e => { if (pressedOutside && outside(e, d)) d.close(); });
+  }
+}
 function toast(msg, kind = 'ok') {
-  let t = $('#toast'); if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); Object.assign(t.style, { position: 'fixed', bottom: '22px', right: '50%', transform: 'translateX(50%)', background: '#1f2328', color: '#fff', padding: '10px 16px', borderRadius: '10px', fontSize: '14px', zIndex: 20, maxWidth: '90%', transition: 'opacity .3s' }); }
+  // #toast is a role="status" live region that exists from page load, so screen readers announce each message
+  const t = $('#toast'); if (!t.dataset.ready) { t.dataset.ready = '1'; Object.assign(t.style, { position: 'fixed', bottom: '22px', right: '50%', transform: 'translateX(50%)', background: '#1f2328', color: '#fff', padding: '10px 16px', borderRadius: '10px', fontSize: '14px', zIndex: 20, maxWidth: '90%', transition: 'opacity .3s' }); }
   t.textContent = msg; t.style.background = kind === 'bad' ? '#8a1f1f' : '#1f2328'; t.style.opacity = 1; clearTimeout(t._t); t._t = setTimeout(() => t.style.opacity = 0, 4000);
 }
 function refreshCurrent() {

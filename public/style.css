@@ -52,7 +52,7 @@ code { background: var(--chip); padding: 1px 6px; border-radius: 6px; font-size:
 .tabs a { padding: 7px 15px; border-radius: 999px; color: var(--muted); font-weight: 550; transition: background .18s, color .18s, transform .12s; }
 .tabs a:hover { color: var(--ink); }
 .tabs a:active { transform: scale(.96); }
-.tabs a.active { background: rgba(255,255,255,.78); color: var(--ink); box-shadow: 0 2px 8px rgba(31,45,80,.12), inset 0 1px 0 #fff; }
+.tabs a.active, .tabs a[aria-current="page"] { background: rgba(255,255,255,.78); color: var(--ink); box-shadow: 0 2px 8px rgba(31,45,80,.12), inset 0 1px 0 #fff; }
 .syncbox { margin-inline-start: auto; display: flex; align-items: center; gap: 12px; }
 
 /* --- buttons --- */
@@ -114,8 +114,10 @@ main { padding: 18px 18px 48px; max-width: 1260px; margin: 0 auto; }
 
 /* --- filters & tables --- */
 .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; align-items: center; }
-.filters input, .filters select, .field select, .field input, .addrow input, .cred input, #aiCard input { border-radius: 999px; padding: 8px 14px; font: inherit; color: var(--ink); box-shadow: inset 0 1px 2px rgba(31,45,80,.08), inset 0 1px 0 rgba(255,255,255,.7); outline: none; transition: box-shadow .15s; }
-.filters input:focus, .cred input:focus, .addrow input:focus, #aiCard input:focus { box-shadow: 0 0 0 3px rgba(47,111,237,.22), inset 0 1px 2px rgba(31,45,80,.08); }
+.filters input, .filters select, .field select, .field input, .addrow input, .cred input, #aiCard input { border-radius: 999px; padding: 8px 14px; font: inherit; color: var(--ink); box-shadow: inset 0 1px 2px rgba(31,45,80,.08), inset 0 1px 0 rgba(255,255,255,.7); transition: box-shadow .15s; }
+/* Keyboard focus: outline (not box-shadow) so it also shows in Forced Colors / High Contrast mode */
+:where(a[href], button, input, select, textarea, [tabindex]):focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.searchbox { margin: 0; }
 .searchbox { display: flex; gap: 6px; }
 .searchbox input { min-width: 240px; }
 .tablewrap { border-radius: var(--r-xl); overflow: auto; margin-top: 8px; }
@@ -164,7 +166,8 @@ table.rec tr.click:hover td { background: rgba(255,255,255,.5); }
 
 /* --- dialog --- */
 dialog { border-radius: var(--r-xl); padding: 0; max-width: 560px; width: calc(100% - 40px); background: rgba(255,255,255,.62); color: var(--ink); }
-dialog::backdrop { background: rgba(20,26,40,.28); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+dialog:modal { overscroll-behavior: contain; }
+dialog::backdrop { background: rgba(20,26,40,.28); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); overflow: hidden; overscroll-behavior: contain; }
 .dlg { padding: 22px 24px; direction: rtl; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
 .chips button { border: 1px solid rgba(255,255,255,.8); background: rgba(255,255,255,.6); border-radius: 999px; padding: 6px 13px; font: inherit; cursor: pointer; box-shadow: inset 0 1px 0 #fff; transition: transform .12s, background .15s, color .15s; }
@@ -174,6 +177,18 @@ dialog::backdrop { background: rgba(20,26,40,.28); -webkit-backdrop-filter: blur
 .dlg-actions { display: flex; justify-content: flex-start; margin-top: 8px; }
 .spin { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(47,111,237,.25); border-top-color: var(--accent); border-radius: 50%; animation: sp 1s linear infinite; vertical-align: -2px; margin-inline-end: 6px; }
 @keyframes sp { to { transform: rotate(360deg); } }
+#toast:empty { display: none; }
 #toast { border-radius: 999px !important; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.2); }
 
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* Reduced motion: keep color/opacity fades, drop only the movement (press-scale, hover-lift) and slow the spinner */
+@media (prefers-reduced-motion: reduce) {
+  .tabs a:active, .btn:active, .catbtn:active, .chips button:active, .card.click:hover, .card.click:active { transform: none; }
+  .spin { animation-duration: 3s; }
+}
+
+/* Screen-reader-only text */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+/* Text-style button used for the merchant name in the recurring lists (keyboard reachable) */
+.linkbtn { all: unset; cursor: pointer; font-weight: 550; }
+.linkbtn:hover { text-decoration: underline; }
+.linkbtn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }

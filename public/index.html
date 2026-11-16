@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>מעקב כספים</title>
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
 <header class="top">
   <div class="brand"><span class="logo">₪</span><h1>מעקב כספים</h1></div>
   <nav class="tabs">
-    <a href="#overview" data-tab="overview" class="active">סקירה</a>
+    <a href="#overview" data-tab="overview" class="active" aria-current="page">סקירה</a>
     <a href="#transactions" data-tab="transactions">תנועות</a>
     <a href="#recurring" data-tab="recurring">קבועים</a>
     <a href="#categories" data-tab="categories">קטגוריות</a>
@@ -22,7 +22,7 @@
   </div>
 </header>
 
-<div id="banner" class="banner" hidden></div>
+<div id="banner" class="banner" role="status" hidden></div>
 
 <main>
   <!-- ===== Overview ===== -->
@@ -73,13 +73,13 @@
       <input type="hidden" id="fMonth">
     </div>
     <div class="filters">
-      <div class="searchbox">
-        <input type="search" id="fSearch" placeholder="חיפוש בתיאור…">
-        <button class="btn primary" id="fSearchBtn">חפש</button>
-      </div>
-      <select id="fCompany"><option value="">כל המקורות</option></select>
-      <select id="fCategory"><option value="">כל הקטגוריות</option></select>
-      <select id="fKind"><option value="">הכל</option><option value="expense">רק הוצאות</option><option value="income">רק הכנסות</option><option value="pending">ממתינות לחיוב</option></select>
+      <form class="searchbox" role="search" id="fSearchForm">
+        <input type="search" id="fSearch" placeholder="חיפוש בתיאור…" aria-label="חיפוש בתיאור" enterkeyhint="search" autocorrect="off" autocapitalize="none" spellcheck="false">
+        <button type="submit" class="btn primary" id="fSearchBtn">חפש</button>
+      </form>
+      <select id="fCompany" aria-label="סינון לפי מקור"><option value="">כל המקורות</option></select>
+      <select id="fCategory" aria-label="סינון לפי קטגוריה"><option value="">כל הקטגוריות</option></select>
+      <select id="fKind" aria-label="סוג תנועה"><option value="">הכל</option><option value="expense">רק הוצאות</option><option value="income">רק הכנסות</option><option value="pending">ממתינות לחיוב</option></select>
       <button class="btn ghost" id="fClear">נקה סינון</button>
       <a class="btn ghost" id="exportBtn" href="/api/export.csv">ייצוא לאקסל</a>
     </div>
@@ -123,8 +123,8 @@
       <div class="panel">
         <div class="panel-h"><h3>הקטגוריות</h3><span class="muted">אפשר להוסיף משלך</span></div>
         <div class="addrow">
-          <input id="newCatIcon" placeholder="🏷️" maxlength="2" style="width:56px;text-align:center">
-          <input id="newCatName" placeholder="שם קטגוריה חדשה">
+          <input id="newCatIcon" aria-label="אייקון לקטגוריה" placeholder="🏷️" maxlength="2" style="width:56px;text-align:center">
+          <input id="newCatName" aria-label="שם קטגוריה חדשה" placeholder="שם קטגוריה חדשה">
           <button class="btn primary" id="addCatBtn">הוסף</button>
         </div>
         <ul id="catList" class="catlist"></ul>
@@ -176,9 +176,9 @@
 </main>
 
 <!-- category picker dialog -->
-<dialog id="catDialog">
+<dialog id="catDialog" closedby="any" aria-labelledby="dlgTitle">
   <form method="dialog" class="dlg">
-    <h3>שינוי קטגוריה</h3>
+    <h3 id="dlgTitle">שינוי קטגוריה</h3>
     <p id="dlgDesc" class="muted"></p>
     <div id="dlgCats" class="chips"></div>
     <label class="check"><input type="checkbox" id="dlgApplyAll" checked> להחיל על כל התנועות מבית העסק הזה (גם בעתיד)</label>
@@ -188,6 +188,8 @@
   </form>
 </dialog>
 
-<script src="app.js?v=9"></script>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js?v=10"></script>
 </body>
 </html>
